@@ -107,12 +107,24 @@
   // NEW
   const haasTotalCost = section2.querySelector(select("grand-total-cost-haas"));
   // NEW
-  const customPricingTag = section2.querySelector(select("custom-pricing-tag"));
+
+  const customPricingTags = document.querySelectorAll('[pp="custom-pricing-tag"]')
   const costSummaryWraps = getElements(section2, select("cost-summary-wrap"));
-  const customPricingTooltipQuantity = section2.querySelector(select("custom-pricing-tooltip-quantity"));
-  const customPricingTooltipPlan = section2.querySelector(select("custom-pricing-tooltip-plan"));
+
+
+  // NEW
+  const customPricingTooltipsQuantity = document.querySelectorAll('[pp="custom-pricing-tooltip-quantity"]');
+  customPricingTooltipsQuantity.forEach(element=>{element.style.display = "none"});
+  // NEW
+
+
+  // NEW
+  const customPricingTooltipsPlan = document.querySelectorAll('[pp="custom-pricing-tooltip-plan"');
+  // NEW
+  
   const countrySelect = getElement(section1, select("country-select"));
   const usStateSelect = getElement(section1, select("us-state-select"));
+
 
   countrySelect.value = DEFAULT_COUNTRY;
   countrySelect.addEventListener("change", () => {
@@ -139,10 +151,12 @@
     preloader.style.display = "flex";
     section1.style.display = "none";
     section2.style.display = "block";
+    hidePricing();
     window.scrollTo(0, 0);
     await delay(2500);
     preloader.style.display = "none";
     emailTarget.value = emailSource.value;
+    
   });
 
   const hardwareToggleButtons = getElements(section2, ".c-toggle__button");
@@ -180,6 +194,8 @@
   planRadioButtons.forEach(radioButton => {
     let planCardWrapper = radioButton.closest(select("plan-card-wrapper"));
     if (planCardWrapper) {
+
+      
       if (radioButton.value === PROFESSIONAL_PLAN) {
         radioButton.checked = true;
         highlightPlanCard(planCardWrapper);
@@ -189,6 +205,8 @@
       radioButton.addEventListener("change", () => {
         highlightPlanCard(planCardWrapper);
         selectedPlanDisplays.forEach(display => (display.innerText = radioButton.value));
+        scrollToPricing();
+        
       });
     }
   });
@@ -265,20 +283,38 @@
 
   function showError(type) {
     costSummaryWraps.forEach(wrap => (wrap.style.display = "none"));
-    customPricingTag.style.display = "flex";
+    customPricingTags.forEach(element=>{element.style.display = "flex"});
+    hidePricing();
 
     if (type === "plan") {
-      customPricingTooltipPlan.style.display = "block";
-      customPricingTooltipQuantity.style.display = "none";
+      customPricingTooltipsPlan.forEach(element=>{element.style.display = "block"});
+      customPricingTooltipsQuantity.forEach(element=>{element.style.display = "none"});
     } else if (type === "quantity") {
-      customPricingTooltipPlan.style.display = "none";
-      customPricingTooltipQuantity.style.display = "block";
+      customPricingTooltipsPlan.forEach(element=>{element.style.display = "none"});
+      customPricingTooltipsQuantity.forEach(element=>{element.style.display = "block"});
     }
   }
 
   function hideError() {
     costSummaryWraps.forEach(wrap => (wrap.style.display = "block"));
-    // grandTotalCost.style.display = "block";
-    customPricingTag.style.display = "none";
+    customPricingTags.forEach(element=>{element.style.display = "none"});
   }
+
+  function hidePricing(){
+    cashUpfrontCost.innerText = "";
+    cashRecurringAnnualCost.innerText = "";
+    cashYear1Total.innerText = "";
+    cashTotalCost.innerText = "";
+    haasRecurringAnnualCost.innerText = "";
+    haasTotalCost.innerText = "";
+
+  }
+
+  // NEW
+  function scrollToPricing()
+  {
+    let element = document.getElementById("quote");
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
 })();
