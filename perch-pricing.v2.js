@@ -1,3 +1,7 @@
+// SCRIPT VERSION 2.1 // 
+// LAST UDPATE 1st of July 2024 //
+
+
 "use strict";
 
 (() => {
@@ -37,12 +41,6 @@
     return `$${number.toLocaleString("en-US")}`;
   }
 
-  // Function to get the data-w-tab attribute value of the currently active tab within the given element
-//   function getActiveTab(element) {
-//     let activeTab = getElements(element, "[data-w-tab]").find(tab => tab.classList.contains("w--current"));
-//     return activeTab ? activeTab.getAttribute("data-w-tab").trim() : "";
-//   }
-
   // Function to get the plan name and price by quantity from the given plan card wrapper element
   function getPlanDetails(planCardWrapper) {
     let planName = getElement(planCardWrapper, "[pp='plan-name']")?.innerText.trim() || "";
@@ -72,18 +70,13 @@
       }, 0);
   }
 
-  // Function to get the active tab name within the given element
-//   function getActiveTabName(element) {
-//     return getActiveTab(element).toLowerCase();
-//   }
-
   const PROFESSIONAL_PLAN = "Professional";
   const MAX_QUANTITY = 10;
   const DEFAULT_COUNTRY = "United States (US)";
+  const SELECTION_NULL = "selection-null";
   const PREFIX = "pp";
   const HIGHLIGHT_CLASS = "cc-highlighted";
   const select = selector => `[${PREFIX}='${selector}']`;
-
   const section1 = getElement(document.body, select("section-1"));
   const section2 = getElement(document.body, select("section-2"));
   const preloader = getElement(document.body, select("preloader"));
@@ -100,37 +93,54 @@
   const cashUpfrontCost = section2.querySelector(select("cash-upfront-cost"));
   const cashRecurringAnnualCost = section2.querySelector(select("cash-recurring-annual-cost"));
   const cashYear1Total = section2.querySelector(select("cash-year-1-total"));
-  // NEW
   const cashTotalCost = section2.querySelector(select("grand-total-cost-cash"));
-  // NEW
   const haasRecurringAnnualCost = section2.querySelector(select("haas-recurring-annual-cost"));
-  // NEW
   const haasTotalCost = section2.querySelector(select("grand-total-cost-haas"));
-  // NEW
-
   const customPricingTags = document.querySelectorAll('[pp="custom-pricing-tag"]')
   const costSummaryWraps = getElements(section2, select("cost-summary-wrap"));
-
-
-  // NEW
   const customPricingTooltipsQuantity = document.querySelectorAll('[pp="custom-pricing-tooltip-quantity"]');
-  customPricingTooltipsQuantity.forEach(element=>{element.style.display = "none"});
-  // NEW
-
-
-  // NEW
+  customPricingTooltipsQuantity.forEach(element => { element.style.display = "none" });
   const customPricingTooltipsPlan = document.querySelectorAll('[pp="custom-pricing-tooltip-plan"');
-  // NEW
-  
   const countrySelect = getElement(section1, select("country-select"));
   const usStateSelect = getElement(section1, select("us-state-select"));
-
+  const perchUseSelect = getElement(section1, select("use-select"));
 
   countrySelect.value = DEFAULT_COUNTRY;
+  usStateSelect.value = "Alabama";
+  disableSubmitButton();
+
   countrySelect.addEventListener("change", () => {
     countrySelect.value === DEFAULT_COUNTRY
       ? (usStateSelect.style.display = "block")
       : (usStateSelect.style.display = "none");
+
+    if (countrySelect.value == SELECTION_NULL) {
+      disableNextButton(1);
+    }
+    else if (countrySelect.value === DEFAULT_COUNTRY && usStateSelect.value == SELECTION_NULL) {
+      disableNextButton(1);
+    }
+    else {
+      enableNextButton(1);
+    }
+  });
+
+  usStateSelect.addEventListener("change", () => {
+    if (countrySelect.value === DEFAULT_COUNTRY && usStateSelect.value == SELECTION_NULL) {
+      disableNextButton(1);
+    }
+    else if (countrySelect.value === DEFAULT_COUNTRY && usStateSelect.value != SELECTION_NULL) {
+      enableNextButton(1);
+    }
+  });
+
+  perchUseSelect.addEventListener("change", () => {
+    if (perchUseSelect.value === SELECTION_NULL){
+      disableSubmitButton(1);
+    }
+    else{
+      enableSubmitButton(1);
+    }
   });
 
   getElements(section2, "[fs-accordion-element='content']").forEach(async content => {
@@ -156,7 +166,7 @@
     await delay(2500);
     preloader.style.display = "none";
     emailTarget.value = emailSource.value;
-    
+
   });
 
   const hardwareToggleButtons = getElements(section2, ".c-toggle__button");
@@ -195,7 +205,7 @@
     let planCardWrapper = radioButton.closest(select("plan-card-wrapper"));
     if (planCardWrapper) {
 
-      
+
       if (radioButton.value === PROFESSIONAL_PLAN) {
         radioButton.checked = true;
         highlightPlanCard(planCardWrapper);
@@ -206,7 +216,7 @@
         highlightPlanCard(planCardWrapper);
         selectedPlanDisplays.forEach(display => (display.innerText = radioButton.value));
         scrollToPricing();
-        
+
       });
     }
   });
@@ -269,38 +279,32 @@
     cashUpfrontCost.innerText = formatCurrency(hardwarePriceCash);
     cashRecurringAnnualCost.innerText = formatCurrency(softwareCost);
     cashYear1Total.innerText = formatCurrency(softwareCost + hardwarePriceCash);
-
-    // NEW
     cashTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceCash);
-    // NEW
-
     haasRecurringAnnualCost.innerText = formatCurrency(softwareCost + hardwarePriceHaas);
-
-    // NEW
     haasTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceHaas);
-    // NEW
+
   }
 
   function showError(type) {
     costSummaryWraps.forEach(wrap => (wrap.style.display = "none"));
-    customPricingTags.forEach(element=>{element.style.display = "flex"});
+    customPricingTags.forEach(element => { element.style.display = "flex" });
     hidePricing();
 
     if (type === "plan") {
-      customPricingTooltipsPlan.forEach(element=>{element.style.display = "block"});
-      customPricingTooltipsQuantity.forEach(element=>{element.style.display = "none"});
+      customPricingTooltipsPlan.forEach(element => { element.style.display = "block" });
+      customPricingTooltipsQuantity.forEach(element => { element.style.display = "none" });
     } else if (type === "quantity") {
-      customPricingTooltipsPlan.forEach(element=>{element.style.display = "none"});
-      customPricingTooltipsQuantity.forEach(element=>{element.style.display = "block"});
+      customPricingTooltipsPlan.forEach(element => { element.style.display = "none" });
+      customPricingTooltipsQuantity.forEach(element => { element.style.display = "block" });
     }
   }
 
   function hideError() {
     costSummaryWraps.forEach(wrap => (wrap.style.display = "block"));
-    customPricingTags.forEach(element=>{element.style.display = "none"});
+    customPricingTags.forEach(element => { element.style.display = "none" });
   }
 
-  function hidePricing(){
+  function hidePricing() {
     cashUpfrontCost.innerText = "";
     cashRecurringAnnualCost.innerText = "";
     cashYear1Total.innerText = "";
@@ -310,11 +314,37 @@
 
   }
 
-  // NEW
-  function scrollToPricing()
-  {
+  function scrollToPricing() {
     let element = document.getElementById("quote");
     element.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-})();
+  function disableNextButton(step) {
+    let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[step];
+    nextButton.style.pointerEvents = "none";
+    nextButton.style.opacity = "0.5";
+    nextButton.classList.add("disabled");
+  }
+
+  function enableNextButton(step) {
+    let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[step];
+    nextButton.style.pointerEvents = "auto";
+    nextButton.style.opacity = "1";
+    nextButton.classList.remove("disabled");
+  }
+
+  function disableSubmitButton(){
+    let submitButton = document.querySelector('[data-submit="true"]');
+    submitButton.style.pointerEvents = "none";
+    submitButton.style.opacity = "0.5";
+    submitButton.classList.add("disabled");
+  }
+
+  function enableSubmitButton(){
+    let submitButton = document.querySelector('[data-submit="true"]');
+    submitButton.style.pointerEvents = "auto";
+    submitButton.style.opacity = "1";
+    submitButton.classList.remove("disabled");
+  }
+
+})(); 

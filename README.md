@@ -46,7 +46,11 @@ This attribute marks the country select dropdown inside the first form. (Which d
 
 ### pp='us-state-select'
 
-This attribute marks the US state select dropdown inside the first form. It is only shown when "United States" is selected in the country-select dropdown. Otherwise it is hidden.
+This attribute marks the US state select dropdown inside the first form. It is only shown when "United States" is selected in the country-select dropdown. Otherwise it is hidden. (Which defaults to Alabama)
+
+### pp='use-select'
+
+This attribute marks the Perch Use reasons select dropdown inside the first form. (Which defaults to Please select...)
 
 ### pp='section-2'
 
