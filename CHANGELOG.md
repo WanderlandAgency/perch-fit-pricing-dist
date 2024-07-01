@@ -1,4 +1,111 @@
+# UPDATE V2.1
+# Adding possibility to disable or enable next/submit depending on select input values
 
+Because the initial version of the script doesn't take into account the "required" attribute of country and state select.
+
+## Initiate new consts and functions
+
+#### To store the default value of all input select
+```js
+const SELECTION_NULL = "selection-null";
+```
+
+#### To store the DOM element of the "use-perch" select input at the last step
+```js
+const perchUseSelect = getElement(section1, select("use-select"));
+```
+
+#### To set default value of us State to Alabama
+```js 
+usStateSelect.value = "Alabama";
+```
+
+#### To set default state of submit button to disable
+```js
+disableSubmitButton();
+```
+
+#### To change states of next and submit buttons
+```js
+function disableNextButton(step) {
+  let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[step];
+  nextButton.style.pointerEvents = "none";
+  nextButton.style.opacity = "0.5";
+  nextButton.classList.add("disabled");
+}
+```
+```js
+function enableNextButton(step) {
+  let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[step];
+  nextButton.style.pointerEvents = "auto";
+  nextButton.style.opacity = "1";
+  nextButton.classList.remove("disabled");
+}
+```
+```js
+function disableSubmitButton(){
+  let submitButton = document.querySelector('[data-submit="true"]');
+  submitButton.style.pointerEvents = "none";
+  submitButton.style.opacity = "0.5";
+  submitButton.classList.add("disabled");
+}
+```
+```js
+function enableSubmitButton(){
+  let submitButton = document.querySelector('[data-submit="true"]');
+  submitButton.style.pointerEvents = "auto";
+  submitButton.style.opacity = "1";
+  submitButton.classList.remove("disabled");
+}
+```
+
+## Updated events listeners
+
+#### Of country select
+```js
+countrySelect.addEventListener("change", () => {
+  countrySelect.value === DEFAULT_COUNTRY
+    ? (usStateSelect.style.display = "block")
+    : (usStateSelect.style.display = "none");
+
+  /// NEW
+  if (countrySelect.value == SELECTION_NULL) {
+    disableNextButton(1);
+  }
+  else if (countrySelect.value === DEFAULT_COUNTRY && usStateSelect.value == SELECTION_NULL) {
+    disableNextButton(1);
+  }
+  else {
+    enableNextButton(1);
+  }
+  /// NEW
+});
+```
+
+#### Added event listener to US State select
+```js
+usStateSelect.addEventListener("change", () => {
+  if (countrySelect.value === DEFAULT_COUNTRY && usStateSelect.value == SELECTION_NULL) {
+    disableNextButton(1);
+  }
+  else if (countrySelect.value === DEFAULT_COUNTRY && usStateSelect.value != SELECTION_NULL) {
+    enableNextButton(1);
+  }
+});
+```
+#### Added event listener to Perch use select
+```js
+perchUseSelect.addEventListener("change", () => {
+  if (perchUseSelect.value === SELECTION_NULL){
+    disableSubmitButton(1);
+  }
+  else{
+    enableSubmitButton(1);
+  }
+});
+```
+
+# UPDATE V2
 # Erased useless const and functions
 
 Because the update on the webflow project involved the use of a grid system instead of webflow's tab to display pricing results. All functions and const based on this system has been erased.
