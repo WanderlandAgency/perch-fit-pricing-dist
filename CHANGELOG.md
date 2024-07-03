@@ -1,3 +1,14 @@
+# UPDATE V2.2
+# Patch active label for hardware item selection
+
+#### To set active class when button is selected in hardwareToggleButtons forEach loop
+```js
+let hardwareNameWrapper = hardwareItem.querySelector(".c-toggle__text");
+button.checked
+  ? hardwareNameWrapper.classList.add("cc-active")
+  : hardwareNameWrapper.classList.remove("cc-active");
+```
+
 # UPDATE V2.1
 # Adding possibility to disable or enable next/submit depending on select input values
 
