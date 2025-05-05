@@ -1,5 +1,5 @@
-// SCRIPT VERSION 2.2 // 
-// LAST UDPATE 3rd of July 2024 //
+// SCRIPT VERSION 2.3.5 // 
+// LAST UDPATE 30th of April 2025 //
 
 "use strict";
 
@@ -86,6 +86,7 @@
   const SELECTION_NULL = "selection-null";
   const PREFIX = "pp";
   const HIGHLIGHT_CLASS = "cc-highlighted";
+  const ACTIVE_CLASS = "cc-active";
   const select = (selector) => `[${PREFIX}='${selector}']`;
   const section1 = getElement(document.body, select("section-1"));
   const section2 = getElement(document.body, select("section-2"));
@@ -107,7 +108,8 @@
   const emailSource = getElement(section1, select("email-source"));
   const emailTarget = getElement(section2, select("email-target"));
   const pricingQuoteTabs = getElement(section2, select("pricing-quote-tabs"));
-  const tabMenu = pricingQuoteTabs.querySelector(".w-tab-menu");
+  // Removed tab menu reference as we no longer use tabs
+  // const tabMenu = pricingQuoteTabs.querySelector(".w-tab-menu");
   const cashUpfrontCost = section2.querySelector(select("cash-upfront-cost"));
   const cashRecurringAnnualCost = section2.querySelector(
     select("cash-recurring-annual-cost")
@@ -121,6 +123,11 @@
   const customPricingTags = document.querySelectorAll(
     '[pp="custom-pricing-tag"]'
   );
+  // Set custom pricing tags to use flex display instead of block
+  customPricingTags.forEach((element) => {
+    element.style.display = "none"; // Initially hidden
+  });
+  
   const costSummaryWraps = getElements(section2, select("cost-summary-wrap"));
   const customPricingTooltipsQuantity = document.querySelectorAll(
     '[pp="custom-pricing-tooltip-quantity"]'
@@ -266,23 +273,42 @@
     }
   });
 
+  // Modified function to properly handle tier card selection
   function highlightPlanCard(planCardWrapper) {
+    // First, reset all selection tags on all plan cards
     planCardWrappers.forEach((wrapper) => {
-      for (let child of wrapper.children) {
-        child.classList.remove(HIGHLIGHT_CLASS);
+      // Find the selection tag in this wrapper
+      const selectTag = wrapper.querySelector('.pricing_tier_select_tag');
+      if (selectTag) {
+        // Remove both highlight and active classes
+        selectTag.classList.remove(HIGHLIGHT_CLASS, ACTIVE_CLASS);
       }
+      
+      // Also reset other elements that might have highlight classes
+      wrapper.querySelectorAll('.pricing_tier_top, .pricing_tier_middle, .pricing_tier_bottom').forEach(element => {
+        element.classList.remove(HIGHLIGHT_CLASS, ACTIVE_CLASS);
+      });
     });
 
-    for (let child of planCardWrapper.children) {
-      child.classList.add(HIGHLIGHT_CLASS);
+    // Now highlight only the selected plan card's selection tag
+    const selectedSelectTag = planCardWrapper.querySelector('.pricing_tier_select_tag');
+    if (selectedSelectTag) {
+      // Add both highlight and active classes to the selected card's tag
+      selectedSelectTag.classList.add(HIGHLIGHT_CLASS, ACTIVE_CLASS);
     }
+    
+    // Also highlight other elements in the selected card if needed
+    planCardWrapper.querySelectorAll('.pricing_tier_top, .pricing_tier_middle, .pricing_tier_bottom').forEach(element => {
+      element.classList.add(HIGHLIGHT_CLASS, ACTIVE_CLASS);
+    });
   }
 
   hardwareToggleButtons.forEach((button) => {
     button.addEventListener("click", updatePricing);
   });
 
-  tabMenu?.addEventListener("click", updatePricing);
+  // Removed tab menu event listener as we no longer use tabs
+  // tabMenu?.addEventListener("click", updatePricing);
   planRadioButtons.forEach((radioButton) => {
     radioButton.addEventListener("change", updatePricing);
   });
@@ -315,6 +341,7 @@
       throw new Error("no selected plan card wrapper");
 
     let hardwarePriceHaas = calculateHardwarePrice(section2, "haas") * quantity;
+    // Still calculate cash price for internal use, but we won't display it
     let hardwarePriceCash = calculateHardwarePrice(section2, "cash") * quantity;
     let softwareCost = getPlanDetails(
       selectedPlanCardWrapper
@@ -324,25 +351,35 @@
     let totalHaas = softwareCost + hardwarePriceHaas;
     let totalCash = softwareCost + hardwarePriceCash;
 
+    // Keep both checks to maintain existing business rules
     if (totalHaas > 15000 || totalCash > 15000) {
       showError("quantity");
       return;
     }
 
-    cashUpfrontCost.innerText = formatCurrency(hardwarePriceCash);
-    cashRecurringAnnualCost.innerText = formatCurrency(softwareCost);
-    cashYear1Total.innerText = formatCurrency(softwareCost + hardwarePriceCash);
-    cashTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceCash);
-    haasRecurringAnnualCost.innerText = formatCurrency(
-      softwareCost + hardwarePriceHaas
-    );
-    haasTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceHaas);
+    // Hide cash/upfront elements by setting them to empty strings
+    // We keep these lines to avoid breaking the code, but they won't be visible in UI
+    if (cashUpfrontCost) cashUpfrontCost.innerText = "";
+    if (cashRecurringAnnualCost) cashRecurringAnnualCost.innerText = "";
+    if (cashYear1Total) cashYear1Total.innerText = "";
+    if (cashTotalCost) cashTotalCost.innerText = "";
+    
+    // Only show HaaS pricing as per client request
+    if (haasRecurringAnnualCost) {
+      haasRecurringAnnualCost.innerText = formatCurrency(
+        softwareCost + hardwarePriceHaas
+      );
+    }
+    
+    if (haasTotalCost) {
+      haasTotalCost.innerText = formatCurrency(softwareCost + hardwarePriceHaas);
+    }
   }
 
   function showError(type) {
     costSummaryWraps.forEach((wrap) => (wrap.style.display = "none"));
     customPricingTags.forEach((element) => {
-      element.style.display = "flex";
+      element.style.display = "flex"; // Use flex instead of block
     });
     hidePricing();
 
@@ -371,12 +408,15 @@
   }
 
   function hidePricing() {
-    cashUpfrontCost.innerText = "";
-    cashRecurringAnnualCost.innerText = "";
-    cashYear1Total.innerText = "";
-    cashTotalCost.innerText = "";
-    haasRecurringAnnualCost.innerText = "";
-    haasTotalCost.innerText = "";
+    // Hide cash/upfront elements by setting them to empty strings
+    if (cashUpfrontCost) cashUpfrontCost.innerText = "";
+    if (cashRecurringAnnualCost) cashRecurringAnnualCost.innerText = "";
+    if (cashYear1Total) cashYear1Total.innerText = "";
+    if (cashTotalCost) cashTotalCost.innerText = "";
+    
+    // Only reset HaaS pricing elements
+    if (haasRecurringAnnualCost) haasRecurringAnnualCost.innerText = "";
+    if (haasTotalCost) haasTotalCost.innerText = "";
   }
 
   function scrollToPricing() {
@@ -388,31 +428,57 @@
     let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[
       step
     ];
-    nextButton.style.pointerEvents = "none";
-    nextButton.style.opacity = "0.5";
-    nextButton.classList.add("disabled");
+    if (nextButton) {
+      nextButton.style.pointerEvents = "none";
+      nextButton.style.opacity = "0.5";
+      nextButton.classList.add("disabled");
+    }
   }
 
   function enableNextButton(step) {
     let nextButton = document.querySelectorAll('button[data-form="next-btn"]')[
       step
     ];
-    nextButton.style.pointerEvents = "auto";
-    nextButton.style.opacity = "1";
-    nextButton.classList.remove("disabled");
+    if (nextButton) {
+      nextButton.style.pointerEvents = "auto";
+      nextButton.style.opacity = "1";
+      nextButton.classList.remove("disabled");
+    }
   }
 
   function disableSubmitButton() {
     let submitButton = document.querySelector('[data-submit="true"]');
-    submitButton.style.pointerEvents = "none";
-    submitButton.style.opacity = "0.5";
-    submitButton.classList.add("disabled");
+    if (submitButton) {
+      submitButton.style.pointerEvents = "none";
+      submitButton.style.opacity = "0.5";
+      submitButton.classList.add("disabled");
+    }
   }
 
   function enableSubmitButton() {
     let submitButton = document.querySelector('[data-submit="true"]');
-    submitButton.style.pointerEvents = "auto";
-    submitButton.style.opacity = "1";
-    submitButton.classList.remove("disabled");
+    if (submitButton) {
+      submitButton.style.pointerEvents = "auto";
+      submitButton.style.opacity = "1";
+      submitButton.classList.remove("disabled");
+    }
   }
+  
+  // Fix for FAQ script error
+  document.addEventListener('DOMContentLoaded', () => {
+    // Get all FAQ containers
+    const faqContainers = document.querySelectorAll('.faq_wrap');
+    if (faqContainers.length === 0) return; // Exit if no FAQ containers
+    
+    faqContainers.forEach(faqContainer => {
+      const faqItems = faqContainer.querySelectorAll('.faq_item');
+      if (faqItems.length > 0) {
+        let firstFaqItem = faqItems[0];
+        const radioButton = firstFaqItem.querySelector('input[type="radio"]');
+        if (radioButton) {
+          radioButton.checked = true;
+        }
+      }
+    });
+  });
 })();
